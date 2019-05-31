@@ -15,55 +15,33 @@
  */
 package uk.ac.ebi.eva.postgres_transactions;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 
+import java.sql.SQLException;
+import java.util.Arrays;
+
+@SpringBootApplication
 public class Application {
 
     public static void main(String[] args) throws InterruptedException, SQLException {
-        if (args.length != 1 && args.length != 2) {
-            System.out.println("This program simulates a race condition of "
-                               + "'insert counter +1 from (select max(counter) counter from transaction_test)'. Run "
-                               + "it in different "
-                               + "terminals at the same time.\nThe observed behaviour is that one of the instances "
-                               + "achieves to insert counter+1 and the others fail with an exception, and the DB is "
-                               + "left in a consistent state.\nNeed 1 or 2 parameters, the url in "
-                               + "format jdbc:postgresql://localhost:port/db?user=fred&password=secret and 'reset' to"
-                               + " reset the DB:\n"
-                               + "java -jar target/postgres-transactions-0.1-SNAPSHOT.jar <url> [reset]");
-            return;
-        }
-        String url = args[0];
-        Connection conn = DriverManager.getConnection(url);
-        if (args.length == 2) {
-            if (!args[1].equals("reset")) {
-                System.out.println("the second parameter can only be 'reset'");
-                return;
+        SpringApplication.run(Application.class, args);
+
+    }
+
+    @Bean
+    public CommandLineRunner commandLineRunner(@Autowired CounterService service) {
+        return args -> {
+            if (Arrays.asList(args).contains("reset")) {
+                service.reset();
+                System.out.println("table reset to have only 1 row with counter=1");
+            } else {
+                service.reserveNewCounter();
+                System.out.println("finished successfully");
             }
-            conn.prepareStatement("delete from transaction_test where counter > 1").executeUpdate();
-            conn.close();
-            System.out.println("table reset to have only 1 row with counter=1");
-        } else {
-            conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
-            conn.setAutoCommit(false);
-            PreparedStatement preparedQuery = conn.prepareStatement("select max(counter) counter from transaction_test");
-            ResultSet resultSet = preparedQuery.executeQuery();
-            resultSet.next();
-            long counter = resultSet.getLong("counter");
-            System.out.println("max counter: " + counter);
-            System.out.println("waiting before update (within transaction)");
-            Thread.sleep(2000);
-            long incrementedCounter = counter + 1;
-            System.out.println("inserting counter=" + incrementedCounter);
-            PreparedStatement preparedInsert = conn.prepareStatement("insert into transaction_test values (?)");
-            preparedInsert.setLong(1, incrementedCounter);
-            preparedInsert.executeUpdate();
-            conn.commit();
-            conn.close();
-            System.out.println("connection committed and closed");
-        }
+        };
     }
 }
