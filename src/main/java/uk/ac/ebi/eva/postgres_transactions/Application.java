@@ -25,10 +25,15 @@ public class Application {
 
     public static void main(String[] args) throws InterruptedException, SQLException {
         if (args.length != 1 && args.length != 2) {
-            System.out.println("this program simulates a race condition of "
-                               + "'insert counter +1 from (select max(counter) counter)'. Run it in different "
-                               + "terminals at the same time.\nneed 1 or 2 parameters, the url in "
-                               + "format jdbc:postgresql://localhost:port/db?user=fred&password=secret and 'reset' to reset the DB");
+            System.out.println("This program simulates a race condition of "
+                               + "'insert counter +1 from (select max(counter) counter from transaction_test)'. Run "
+                               + "it in different "
+                               + "terminals at the same time.\nThe observed behaviour is that one of the instances "
+                               + "achieves to insert counter+1 and the others fail with an exception, and the DB is "
+                               + "left in a consistent state.\nNeed 1 or 2 parameters, the url in "
+                               + "format jdbc:postgresql://localhost:port/db?user=fred&password=secret and 'reset' to"
+                               + " reset the DB:\n"
+                               + "java -jar target/postgres-transactions-0.1-SNAPSHOT.jar <url> [reset]");
             return;
         }
         String url = args[0];
