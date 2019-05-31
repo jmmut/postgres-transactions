@@ -17,6 +17,8 @@ package uk.ac.ebi.eva.postgres_transactions;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class Application {
@@ -29,6 +31,16 @@ public class Application {
         }
         String url = args[0];
         Connection conn = DriverManager.getConnection(url);
+        conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+        conn.setAutoCommit(false);
+        PreparedStatement s = conn.prepareStatement("select max(counter) counter from transaction_test");
+        ResultSet resultSet = s.executeQuery();
+        resultSet.next();
+        long counter = resultSet.getLong("counter");
+        System.out.println(counter);
+        conn.prepareStatement("insert into transaction_test values (?)").setLong(1, counter +1);
+        conn.commit();
+        conn.close();
     }
 
 }
