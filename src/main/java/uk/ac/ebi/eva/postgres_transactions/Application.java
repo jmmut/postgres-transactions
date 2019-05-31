@@ -24,9 +24,11 @@ import java.sql.SQLException;
 public class Application {
 
     public static void main(String[] args) throws InterruptedException, SQLException {
-//        System.out.println("args provided: " + String.join(", ", args));
         if (args.length != 1 && args.length != 2) {
-            System.out.println("need 1 or 2 parameters, the url in format jdbc:postgresql://localhost:port/db?user=fred&password=secret and 'reset' to reset the DB");
+            System.out.println("this program simulates a race condition of "
+                               + "'insert counter +1 from (select max(counter) counter)'. Run it in different "
+                               + "terminals at the same time.\nneed 1 or 2 parameters, the url in "
+                               + "format jdbc:postgresql://localhost:port/db?user=fred&password=secret and 'reset' to reset the DB");
             return;
         }
         String url = args[0];
@@ -56,7 +58,7 @@ public class Application {
             preparedInsert.executeUpdate();
             conn.commit();
             conn.close();
-            System.out.println("connection commited and closed");
+            System.out.println("connection committed and closed");
         }
     }
 }
