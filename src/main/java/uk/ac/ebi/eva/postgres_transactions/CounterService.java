@@ -34,7 +34,7 @@ public class CounterService {
         System.out.println("max counter: " + highestCounter.getCounter());
         System.out.println("waiting before update (within transaction)");
         Thread.sleep(5000);
-        CounterEntity newCounter = new CounterEntity(highestCounter.getCounter());
+        CounterEntity newCounter = new CounterEntity(highestCounter.getCounter() + 1);
         System.out.println("inserting counter=" + newCounter.getCounter());
         repository.save(newCounter);
         return newCounter;
